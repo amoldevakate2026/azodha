@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: azodha-api
+  namespace: default
+  labels:
+    app: azodha-api
+spec:
+  type: ClusterIP
+  selector:
+    app: azodha-api
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  sessionAffinity: None
