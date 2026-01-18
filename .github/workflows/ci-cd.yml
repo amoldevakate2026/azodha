@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: docker.io
-   IMAGE_NAME: "amoldevakate2026/azodha.run.place-dockerhub"
+  IMAGE_NAME: "amoldevakate2026/azodha.run.place-dockerhub"
 jobs:
   test:
     name: Run Tests
@@ -40,21 +40,26 @@ jobs:
     name: Security Scan
     continue-on-error: true
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: 'fs'
-        scan-ref: '.'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-    
-    - name: Upload Trivy results
-      uses: github/codeql-action/upload-sarif@v2
-      with:
-        sarif_file: 'trivy-results.sarif'
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-results.sarif
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+
 
   build:
     name: Build and Push Docker Image
