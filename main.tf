@@ -82,6 +82,28 @@ resource "aws_iam_role_policy_attachment" "azodha-project-AmazonEC2ContainerRegi
   role       = aws_iam_role.azodha-project-1.name
 }
 
+# IAM instance profile for node group
+resource "aws_iam_instance_profile" "eks_node_instance_profile" {
+  name = "eks-node-instance-profile"
+  role = aws_iam_role.azodha-project-1.name
+}
+
+# Launch template for node group
+resource "aws_launch_template" "eks_node_lt" {
+  name_prefix   = "eks-node-group-"
+  instance_type = "t2.medium"
+
+  iam_instance_profile {
+    name = aws_iam_instance_profile.eks_node_instance_profile.name
+  }
+
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      Name = "EKS-Node"
+    }
+  }
+}
 
 #create node group
 resource "aws_eks_node_group" "azodha-project" {
@@ -96,13 +118,16 @@ resource "aws_eks_node_group" "azodha-project" {
     max_size     = 2
     min_size     = 1
   }
-  instance_types = ["t2.medium"]
-
-  # Ensure that IAM Role permissions are created before and deleted after EKS Node Group handling.
+  launch_template {
+    id      = aws_launch_template.eks_node_lt.id
+    version = "$Latest"
+  }
   # Otherwise, EKS will not be able to properly delete EC2 Instances and Elastic Network Interfaces.
   depends_on = [
     aws_iam_role_policy_attachment.azodha-project-AmazonEKSWorkerNodePolicy,
     aws_iam_role_policy_attachment.azodha-project-AmazonEKS_CNI_Policy,
     aws_iam_role_policy_attachment.azodha-project-AmazonEC2ContainerRegistryReadOnly,
+    aws_iam_instance_profile.eks_node_instance_profile,
+    aws_launch_template.eks_node_lt,
   ]
 }
