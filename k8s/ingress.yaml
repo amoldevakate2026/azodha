@@ -12,10 +12,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - api.azodha.example.com
+    - azodha.run.place
     secretName: azodha-api-tls
   rules:
-  - host: api.azodha.example.com
+  - host: azodha.run.place
     http:
       paths:
       - path: /
