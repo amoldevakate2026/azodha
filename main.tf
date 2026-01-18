@@ -82,17 +82,11 @@ resource "aws_iam_role_policy_attachment" "azodha-project-AmazonEC2ContainerRegi
   role       = aws_iam_role.azodha-project-1.name
 }
 
-# Create IAM instance profile for node group
-resource "aws_iam_instance_profile" "eks_node_instance_profile" {
-  name = "eks-node-group-instance-profile"
-  role = aws_iam_role.azodha-project-1.name
-}
 
 #create node group
 resource "aws_eks_node_group" "azodha-project" {
   cluster_name    = aws_eks_cluster.azodha-project.name
-  node_group_name = "Node-cloud"
-  node_role_arn   = aws_iam_role.azodha-project-1.arn
+  node_group_name = "Node-cloud-v2"  node_role_arn   = aws_iam_role.azodha-project-1.arn
   subnet_ids      = data.aws_subnets.public.ids
 
   scaling_config {
@@ -108,6 +102,5 @@ resource "aws_eks_node_group" "azodha-project" {
     aws_iam_role_policy_attachment.azodha-project-AmazonEKSWorkerNodePolicy,
     aws_iam_role_policy_attachment.azodha-project-AmazonEKS_CNI_Policy,
     aws_iam_role_policy_attachment.azodha-project-AmazonEC2ContainerRegistryReadOnly,
-    aws_iam_instance_profile.eks_node_instance_profile,
   ]
 }
