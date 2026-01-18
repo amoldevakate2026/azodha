@@ -1,296 +1,343 @@
 # Azodha DevOps Engineer Take-Home Assignment
 
-## Overview
-This project demonstrates a complete DevOps solution for deploying a containerized Flask API service to AWS EKS with automated CI/CD pipeline, monitoring, and infrastructure as code.
+## 🚀 Project Overview
 
-## Architecture
+Complete production-ready DevOps solution demonstrating:
+- **Containerized Flask API** with health and prediction endpoints
+- **AWS EKS Kubernetes cluster** deployed via Terraform
+- **Automated CI/CD pipeline** with GitHub Actions
+- **Remote state management** with S3 and DynamoDB
+- **Custom domain routing** with CNAME records
+- **Production-grade** Docker multi-stage builds
+
+---
+
+## 🌐 Live Endpoints
+
+**Application URLs:**
+- 🔗 http://api.azodha.run.place/health
+- 🔗 http://api.azodha.run.place/predict
+- 🔗 http://app.azodha.run.place/health
+- 🔗 http://www.azodha.run.place/health
+
+**AWS LoadBalancer:**
+- `aafbd4addd6c8484f953d7ba900ad0df-21721920.us-east-1.elb.amazonaws.com`
+
+---
+
+## 📁 Repository Structure
 
 ```
-┌─────────────┐
-│  Developer  │
-└──────┬──────┘
-       │ git push
-       ▼
-┌──────────────────────────────────────────────────┐
-│           GitHub Actions (CI/CD)                  │
-│  ┌──────┐  ┌────────┐  ┌──────────┐  ┌────────┐ │
-│  │Build │→ │ Test  │→ │ Docker   │→ │ Deploy │ │
-│  │      │  │       │  │ Build    │  │ to EKS │ │
-│  └──────┘  └────────┘  └────┬─────┘  └────────┘ │
-└──────────────────────────────│───────────────────┘
-                               │
-                               ▼
-                        ┌─────────────┐
-                        │ Docker Hub  │
-                        └──────┬──────┘
-                               │
-                               ▼
-┌────────────────────────────────────────────────┐
-│              AWS EKS Cluster                   │
-│  ┌────────────────────────────────────────┐   │
-│  │  Pod 1    │  Pod 2    │  LoadBalancer  │   │
-│  │  ┌──────┐ │ ┌──────┐  │  ┌──────────┐ │   │
-│  │  │ API  │ │ │ API  │  │  │ Service  │ │   │
-│  │  └──────┘ │ └──────┘  │  └──────────┘ │   │
-│  └────────────────────────────────────────┘   │
-└────────────────────────────────────────────────┘
-                      │
-                      ▼
-              ┌──────────────┐
-              │  CloudWatch  │
-              │  Monitoring  │
-              └──────────────┘
+azodha/
+├── IAC Branch (Infrastructure)
+│   ├── main.tf              # EKS cluster & node group
+│   ├── backend.tf           # S3 remote state config
+│   └── README.md            # This file
+│
+└── Dev Branch (Application)
+    ├── app.py               # Flask API service
+    ├── requirements.txt     # Python dependencies
+    ├── Dockerfile           # Multi-stage production build
+    ├── test_app.py          # Unit tests
+    ├── k8s/
+    │   └── deployment.yaml  # K8s manifests
+    └── .github/workflows/
+        └── ci-cd.yml        # Build & deploy pipeline
 ```
 
-## Project Structure
-```
-.
-├── app.py                 # Flask API application
-├── requirements.txt       # Python dependencies  
-├── Dockerfile            # Multi-stage production Docker image
-├── k8s/
-│   └── deployment.yaml   # Kubernetes deployment manifest
-├── .github/
-│   └── workflows/
-│       └── terraform.yml # CI/CD pipeline
-├── main.tf              # Terraform EKS infrastructure
-├── provider.tf          # Terraform AWS provider
-└── README.md            # This file
+---
+
+## 🏗️ Infrastructure Architecture
+
+### AWS Resources Created
+
+**EKS Cluster:**
+- Name: `azodha-eks-cluster`
+- Region: `us-east-1`
+- Kubernetes Version: `1.34`
+- Status: ACTIVE
+
+**Node Group:**
+- Instance Type: `t3.medium`
+- Desired Capacity: 2
+- Min: 1, Max: 3
+- Auto-scaling enabled
+
+**Networking:**
+- VPC: Default VPC
+- Subnets: us-east-1a, us-east-1b, us-east-1c, us-east-1d, us-east-1f
+- LoadBalancer: AWS ELB (Classic)
+
+**IAM Roles:**
+- `azodha-eks-cluster-cluster-role` (EKS Cluster)
+- `azodha-eks-cluster-node-role` (Worker Nodes)
+
+---
+
+## 🗄️ Terraform State Management
+
+**S3 Backend Configuration:**
+```hcl
+Bucket: azodha-terraform-state-404967771393
+Key: eks-cluster/terraform.tfstate
+Region: us-east-1
+Encryption: Enabled
+Versioning: Enabled
 ```
 
-## API Endpoints
+**DynamoDB State Locking:**
+```hcl
+Table: azodha-terraform-locks
+Billing Mode: PAY_PER_REQUEST
+```
 
-### GET /health
-Health check endpoint
-```json
+**Viewing State:**
+```bash
+# List state resources
+terraform state list
+
+# View S3 bucket
+aws s3 ls s3://azodha-terraform-state-404967771393/eks-cluster/
+
+# Check DynamoDB locks
+aws dynamodb scan --table-name azodha-terraform-locks
+```
+
+---
+
+## 🚀 Deployment Guide
+
+### Prerequisites
+- AWS CLI configured
+- Terraform >= 1.0
+- kubectl installed
+- Docker installed
+
+### Step 1: Clone Repository
+```bash
+# Clone IAC branch
+git clone -b IAC https://github.com/amoldevakate2026/azodha.git
+cd azodha
+```
+
+### Step 2: Deploy Infrastructure
+```bash
+# Initialize Terraform with S3 backend
+terraform init
+
+# Review planned changes
+terraform plan
+
+# Apply infrastructure
+terraform apply --auto-approve
+```
+
+**Expected Output:**
+```
+Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
+
+Outputs:
+cluster_endpoint = "https://99CF5371792CB79D5DE5927085..."
+cluster_name = "azodha-eks-cluster"
+cluster_status = "ACTIVE"
+```
+
+### Step 3: Configure kubectl
+```bash
+aws eks update-kubeconfig --region us-east-1 --name azodha-eks-cluster
+```
+
+### Step 4: Deploy Application
+```bash
+# Build Docker image
+docker build -t azodha-api:latest .
+
+# Create ECR repository
+aws ecr create-repository --repository-name azodha-api --region us-east-1
+
+# Authenticate Docker to ECR
+aws ecr get-login-password --region us-east-1 | docker login --username AWS \
+  --password-stdin 404967771393.dkr.ecr.us-east-1.amazonaws.com
+
+# Tag and push
+docker tag azodha-api:latest 404967771393.dkr.ecr.us-east-1.amazonaws.com/azodha-api:latest
+docker push 404967771393.dkr.ecr.us-east-1.amazonaws.com/azodha-api:latest
+
+# Deploy to Kubernetes
+kubectl apply -f k8s/deployment.yaml
+
+# Expose service
+kubectl expose deployment azodha-api --type=LoadBalancer --port=80 --target-port=8080
+```
+
+### Step 5: Verify Deployment
+```bash
+# Check pods
+kubectl get pods
+
+# Check service
+kubectl get svc azodha-api
+
+# Get LoadBalancer URL
+LB_URL=$(kubectl get svc azodha-api -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+echo $LB_URL
+
+# Test endpoints
+curl http://$LB_URL/health
+curl http://$LB_URL/predict
+```
+
+---
+
+## 🔄 CI/CD Pipeline
+
+**GitHub Actions Workflow** (`.github/workflows/ci-cd.yml`):
+
+1. **Build Stage:** Docker image build
+2. **Test Stage:** Run unit tests
+3. **Push Stage:** Push to ECR
+4. **Deploy Stage:** Update EKS deployment
+
+**Triggered on:**
+- Push to `dev` branch
+- Pull request to `main`
+
+---
+
+## 🧪 API Endpoints
+
+### Health Check
+```bash
+GET /health
+
+Response:
 {
-  "status": "healthy",
-  "service": "azodha-api"
+  "service": "azodha-api",
+  "status": "healthy"
 }
 ```
 
-### GET /predict
-Prediction endpoint
-```json
+### Prediction
+```bash
+GET /predict
+
+Response:
 {
   "score": 0.75
 }
 ```
 
-## Infrastructure Components
+---
 
-### 1. Containerization
-**Production-Grade Dockerfile Features:**
-- Multi-stage build (builder + runtime)
-- Non-root user (appuser) for security
-- Minimal base image (python:3.11-slim)
-- Health check configuration
-- Gunicorn WSGI server
-- Proper logging configuration
+## 🌍 Domain Configuration
 
-### 2. Kubernetes Deployment
-**Features:**
-- 2 replicas for high availability
-- Resource limits and requests
-- Liveness probe (health check every 30s)
-- Readiness probe (health check every 10s)
-- Rolling update strategy
+**DNS Records (freedomain.one):**
 
-### 3. CI/CD Pipeline
-**GitHub Actions Workflow:**
-1. **Build Stage**: Install Python dependencies
-2. **Test Stage**: Run pytest (extensible for unit tests)
-3. **Containerize**: Build Docker image with Buildx
-4. **Push**: Push to Docker Hub with tags (latest + git SHA)
-5. **Deploy**: Deploy to EKS with rolling update
+| Type  | Host | Value                                           | TTL  |
+|-------|------|-------------------------------------------------|------|
+| CNAME | api  | aafbd4addd6c8484f953d7ba900ad0df-21721920.us-east-1.elb.amazonaws.com | 3600 |
+| CNAME | app  | aafbd4addd6c8484f953d7ba900ad0df-21721920.us-east-1.elb.amazonaws.com | 3600 |
+| CNAME | www  | aafbd4addd6c8484f953d7ba900ad0df-21721920.us-east-1.elb.amazonaws.com | 3600 |
 
-### 4. Infrastructure as Code
-**Terraform Components:**
-- VPC configuration with public subnets
-- EKS cluster (v1.34)
-- Node group with auto-scaling
-- IAM roles with least-privilege policies
-- Security groups
+---
 
-## Deployment Instructions
+## 🧹 Cleanup
 
-### Prerequisites
-- AWS Account with EKS permissions
-- Docker Hub account
-- GitHub repository with secrets configured
-
-### Required GitHub Secrets
-```
-AWS_ACCESS_KEY_ID
-AWS_SECRET_ACCESS_KEY
-DOCKERHUB_USERNAME
-DOCKERHUB_TOKEN
-```
-
-### Deployment Steps
-
-1. **Infrastructure Setup** (One-time)
 ```bash
-# Initialize Terraform
-terraform init
+# Delete Kubernetes resources
+kubectl delete svc azodha-api
+kubectl delete deployment azodha-api
 
-# Plan infrastructure
-terraform plan
+# Destroy infrastructure
+terraform destroy --auto-approve
 
-# Apply infrastructure
-terraform apply
+# Delete ECR images
+aws ecr batch-delete-image --repository-name azodha-api \
+  --image-ids imageTag=latest --region us-east-1
+
+# Delete ECR repository
+aws ecr delete-repository --repository-name azodha-api \
+  --force --region us-east-1
 ```
 
-2. **Application Deployment** (Automatic via CI/CD)
-```bash
-# Push to IAC branch triggers pipeline
-git push origin IAC
-```
+---
 
-3. **Manual Deployment** (Optional)
-```bash
-# Build Docker image
-docker build -t amoldevakate2026/azodha-api:latest .
+## 📊 Monitoring & Logs
 
-# Push to Docker Hub
-docker push amoldevakate2026/azodha-api:latest
-
-# Configure kubectl
-aws eks update-kubeconfig --name EKS_CLOUD --region us-east-1
-
-# Deploy to Kubernetes
-kubectl apply -f k8s/deployment.yaml
-
-# Check deployment status
-kubectl rollout status deployment/azodha-api
-```
-
-## Monitoring & Alerts
-
-### CloudWatch Metrics
-The application automatically sends metrics to CloudWatch:
-- CPU utilization
-- Memory usage
-- Request count
-- Error rate
-- Health check status
-
-### Alerts Configuration
-Alerts are configured for:
-1. **High CPU Usage**: Alert when CPU > 80% for 5 minutes
-2. **High Memory Usage**: Alert when Memory > 80% for 5 minutes
-3. **Health Check Failures**: Alert on 3 consecutive failures
-
-### Viewing Logs
 ```bash
 # View pod logs
 kubectl logs -f deployment/azodha-api
 
-# View logs for specific pod
-kubectl logs -f <pod-name>
-
-# CloudWatch Logs
-AWS Console → CloudWatch → Log Groups → /aws/eks/EKS_CLOUD
-```
-
-## Security Considerations
-
-### Application Security
-- Non-root container user
-- Minimal base image to reduce attack surface
-- No hardcoded secrets
-- HTTPS enforcement (via AWS ALB)
-- Resource limits to prevent DoS
-
-### IAM Security
-- Least-privilege IAM roles
-- Service accounts for pod-level permissions
-- Secrets stored in AWS Secrets Manager
-- No credentials in code or environment variables
-
-### Network Security
-- Private subnets for nodes
-- Security groups with minimal ingress
-- NACLs for network segmentation
-
-## CI/CD Workflow Explanation
-
-The CI/CD pipeline implements continuous deployment with these stages:
-
-1. **Code Checkout**: Pull latest code from repository
-2. **Build**: Install Python dependencies and validate code
-3. **Test**: Run automated tests (pytest framework ready)
-4. **Docker Build**: Create production container image
-5. **Push**: Upload to Docker Hub with version tags
-6. **Deploy**: Rolling update to EKS cluster
-7. **Verify**: Check deployment health and rollout status
-
-**Deployment Strategy**: Rolling updates with zero downtime
-- Old pods remain running until new pods are healthy
-- Gradual traffic shift to new version
-- Automatic rollback on failure
-
-## Monitoring & Alert Design
-
-### Metrics Collection
-- **Container Insights**: CPU, memory, disk, network at pod level
-- **Application Metrics**: Custom metrics from Flask app
-- **EKS Metrics**: Cluster health, node status
-
-### Dashboard
-CloudWatch dashboard includes:
-- API request rate and latency
-- Pod CPU and memory usage
-- Error rate and 5XX responses
-- Health check status
-
-### Alert Thresholds
-| Metric | Threshold | Action |
-|--------|-----------|--------|
-| CPU | > 80% for 5min | Email + Scale up |
-| Memory | > 80% for 5min | Email + Scale up |
-| Error Rate | > 5% | Email + Page |
-| Health Checks | 3 failures | Email + Restart |
-
-## Troubleshooting
-
-### Pod Not Starting
-```bash
+# Describe pods
 kubectl describe pod <pod-name>
-kubectl logs <pod-name>
+
+# Get cluster info
+kubectl cluster-info
+
+# View nodes
+kubectl get nodes -o wide
 ```
 
-### Deployment Stuck
-```bash
-kubectl rollout status deployment/azodha-api
-kubectl rollout history deployment/azodha-api
-kubectl rollout undo deployment/azodha-api
-```
+---
 
-### CI/CD Pipeline Failure
-1. Check GitHub Actions logs
-2. Verify secrets are configured
-3. Check AWS permissions
-4. Validate Docker Hub connectivity
+## 🔒 Security Best Practices
 
-## Performance Optimization
+✅ Non-root Docker user  
+✅ Multi-stage Docker builds  
+✅ IAM roles with least privilege  
+✅ Encrypted S3 state backend  
+✅ DynamoDB state locking  
+✅ VPC security groups  
+✅ Health check probes  
 
-- Multi-stage Docker builds reduce image size by 60%
-- Gunicorn with 2 workers for concurrency
-- Resource requests ensure consistent performance
-- Horizontal Pod Autoscaler for traffic spikes
+---
 
-## Future Enhancements
+## 📝 Key Features Implemented
 
-- [ ] Add Prometheus + Grafana for advanced monitoring
-- [ ] Implement Blue-Green deployment
-- [ ] Add integration tests
-- [ ] Set up Istio service mesh
-- [ ] Add distributed tracing with X-Ray
-- [ ] Implement canary deployments
+- [x] Flask API with /health and /predict endpoints
+- [x] Production Dockerfile with multi-stage build
+- [x] Kubernetes deployment with 2 replicas
+- [x] AWS EKS cluster via Terraform
+- [x] S3 backend for Terraform state
+- [x] DynamoDB for state locking
+- [x] LoadBalancer service
+- [x] Custom domain with CNAME records
+- [x] CI/CD pipeline with GitHub Actions
+- [x] Comprehensive documentation
 
-## Author
-Amol Devakate
+---
 
-## License
-MIT
+## 🛠️ Tech Stack
+
+**Application:**
+- Python 3.9
+- Flask 3.0.2
+- Gunicorn 21.2.0
+
+**Infrastructure:**
+- AWS EKS
+- Terraform 1.0+
+- Kubernetes 1.34
+- Docker
+
+**CI/CD:**
+- GitHub Actions
+- AWS ECR
+
+---
+
+## 📞 Support
+
+For issues or questions, please open an issue in this repository.
+
+---
+
+## 📄 License
+
+This project is part of the Azodha DevOps Engineer take-home assignment.
+
+---
+
+**Author:** Amol Devakate  
+**Date:** January 2026  
+**Status:** ✅ Production Ready
