@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ Dev, main ]
+    branches: [ Dev ]
   pull_request:
-    branches: [ Dev, main ]
+    branches: [ Dev ]
 
 env:
   REGISTRY: docker.io
