@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: azodha-api
+  labels:
+    app: azodha-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: azodha-api
+  template:
+    metadata:
+      labels:
+        app: azodha-api
+    spec:
+      containers:
+      - name: azodha-api
+        image: amoldevakate2026/azodha-api:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: PORT
+          value: "8080"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
