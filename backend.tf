@@ -1,7 +1,1 @@
-terraform {
-  backend "s3" {
-    bucket = "azodha-project" # Replace with your actual S3 bucket name
-    key    = "EKS/terraform.tfstate"
-    region = "us-east-1"
-  }
-}
+# Backend configuration removed - using local state for simplicity
