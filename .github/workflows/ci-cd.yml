@@ -8,8 +8,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: azodha-api
-  
+IMAGE_NAME: amoldevakate2026/azodha.run.place-dockerhub  
 jobs:
   test:
     name: Run Tests
@@ -78,7 +77,7 @@ jobs:
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}
+        images: ${{ env.IMAGE_NAME }}
         tags: |
           type=raw,value=dev
           type=sha,prefix={{branch}}-
