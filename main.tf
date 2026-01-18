@@ -86,11 +86,13 @@ resource "aws_iam_role_policy_attachment" "azodha-project-AmazonEC2ContainerRegi
 #create node group
 resource "aws_eks_node_group" "azodha-project" {
   cluster_name    = aws_eks_cluster.azodha-project.name
-  node_group_name = "Node-cloud-v2"  node_role_arn   = aws_iam_role.azodha-project-1.arn
+  node_group_name = "Node-cloud-v2"
+  node_role_arn   = aws_iam_role.azodha-project-1.arn
   subnet_ids      = data.aws_subnets.public.ids
 
   scaling_config {
     desired_size = 1
+
     max_size     = 2
     min_size     = 1
   }
