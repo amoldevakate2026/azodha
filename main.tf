@@ -11,16 +11,15 @@ data "aws_iam_policy_document" "assume_role" {
   }
 }
 
-resource "aws_iam_role" "eks_cluster_role" {
+resource "aws_iam_role" "azodha" {
   name               = "eks-cluster-cloud"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
-resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
+resource "aws_iam_role_policy_attachment" "azodha-AmazonEKSClusterPolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-  role       = aws_iam_role.eks_cluster_role.name
+  role       = aws_iam_role.azodha.name
 }
-
 
 #get vpc data
 data "aws_vpc" "default" {
@@ -38,9 +37,9 @@ data "aws_subnets" "public" {
   }
 }
 #cluster provision
-resource "aws_eks_cluster" "eks_cluster" {
+resource "aws_eks_cluster" "azodha" {
   name     = "EKS_CLOUD"
-  role_arn = aws_iam_role.eks_cluster_role.arn
+  role_arn = aws_iam_role.azodha.arn
 
   vpc_config {
     subnet_ids = data.aws_subnets.public.ids
@@ -49,12 +48,11 @@ resource "aws_eks_cluster" "eks_cluster" {
   # Ensure that IAM Role permissions are created before and deleted after EKS Cluster handling.
   # Otherwise, EKS will not be able to properly delete EKS managed EC2 infrastructure such as Security Groups.
   depends_on = [
-  aws_iam_role_policy_attachment.eks_cluster_policy,
-]
-
+    aws_iam_role_policy_attachment.azodha-AmazonEKSClusterPolicy,
+  ]
 }
 
-resource "aws_iam_role" "eks_node_role" {
+resource "aws_iam_role" "azodha1" {
   name = "eks-node-group-cloud"
 
   assume_role_policy = jsonencode({
