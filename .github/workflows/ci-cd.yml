@@ -63,7 +63,7 @@ jobs:
     needs: [test, security-scan]
     if: github.event_name == 'push'
     steps:
-    - uses: act    
+    - uses: actions/checkout@v4    
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
     
