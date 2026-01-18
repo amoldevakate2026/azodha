@@ -39,7 +39,7 @@ jobs:
 
   security-scan:
     name: Security Scan
-  continue-on-error: trueue
+  continue-on-error: true
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
