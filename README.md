@@ -122,8 +122,23 @@ The following CloudWatch alarms are configured to monitor the system:
 2. **unhealthy_host_alert**
    - **Metric**: `UnHealthyHostCount` (AWS/ELB)
    - **Condition**: Greater than 0
+   - 
+   
    - **Description**: Alerts when unhealthy hosts are detected on the load balancer
    - **Evaluation Period**: 5 minutes
+  
+   - ### Endpoint Monitoring
+
+The alarms effectively monitor both application endpoints:
+
+- **`/health` endpoint**: Directly monitored through the `unhealthy_host_alert` alarm via load balancer health checks
+- **`/predict` endpoint**: Monitored indirectly - if the application pods are healthy (passing health checks), the `/predict` endpoint is also accessible
+
+**How it works**:
+1. Load balancer continuously performs health checks on the `/health` endpoint
+2. If `/health` fails, hosts become unhealthy and `unhealthy_host_alert` triggers
+3. If application crashes or pods fail, both endpoints become unavailable and alarms trigger
+4. The `/predict` endpoint availability is ensured by monitoring the overall application health
 
 ## 🔐 Security Features
 - SSL/TLS encryption via custom domain
