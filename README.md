@@ -108,10 +108,28 @@ Access the monitoring dashboard at:
 3. **Host Health**
    - `HealthyHostCount`
    - `UnHealthyHostCount`
+  
+   - ### CloudWatch Alarms
+
+The following CloudWatch alarms are configured to monitor the system:
+
+1. **EKS-Pending-Pods-High**
+   - **Metric**: `scheduler_pending_pods`
+   - **Condition**: Greater than 0
+   - **Description**: Alerts when pods are stuck in pending state, indicating potential scheduling issues
+   - **Evaluation Period**: 5 minutes
+
+2. **unhealthy_host_alert**
+   - **Metric**: `UnHealthyHostCount` (AWS/ELB)
+   - **Condition**: Greater than 0
+   - **Description**: Alerts when unhealthy hosts are detected on the load balancer
+   - **Evaluation Period**: 5 minutes
 
 ## 🔐 Security Features
 - SSL/TLS encryption via custom domain
 - AWS IAM roles for service access
+
+- 
 - Kubernetes RBAC for cluster access
 - Secrets management via Kubernetes secrets
 
